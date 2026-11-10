@@ -1,0 +1,5 @@
+(declare-fun arr () (Array Int Int))
+(declare-fun y () Int)
+(declare-fun x () Int)
+(declare-fun a () Int)
+(assert (distinct (select arr a) y))

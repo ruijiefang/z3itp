@@ -1,0 +1,6 @@
+(declare-fun s0 () Int)
+(declare-fun h (Int) Int)
+(declare-fun s1 () Int)
+(declare-fun s2 () Int)
+(assert (= s2 (h s1)))
+(assert (< s2 0))

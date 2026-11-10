@@ -1,0 +1,8 @@
+(declare-fun s0 () Int)
+(declare-fun s1 () Int)
+(declare-fun s2 () Int)
+(declare-fun s3 () Int)
+(declare-fun s4 () Int)
+(assert (or (= s3 (+ s2 2)) (= s3 s2)))
+(assert (or (= s4 (+ s3 2)) (= s4 s3)))
+(assert (= s4 5))

@@ -1,0 +1,7 @@
+(declare-fun z () Int)
+(declare-fun y () Int)
+(declare-fun x () Int)
+(assert (>= y 0))
+(assert (<= y 1))
+(assert (>= z 0))
+(assert (<= z 1))

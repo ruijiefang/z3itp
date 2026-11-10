@@ -1,0 +1,5 @@
+(declare-fun P (Int) Bool)
+(declare-fun a () Int)
+(declare-fun c () Int)
+(assert (forall ((X Int)) (=> (> X a) (P X))))
+(assert (> c a))

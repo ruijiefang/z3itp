@@ -1,0 +1,216 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{ebproof}
+\usepackage{tabularx}
+\usepackage{longtable}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{flafter}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,patterns,shapes.geometric,fit,calc}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+\usepackage[capitalise,nameinlink]{cleveref}
+
+\lstset{basicstyle=\ttfamily\small,columns=fullflexible,keepspaces=true,
+        frame=single,framerule=0.3pt,rulecolor=\color{black!30},
+        xleftmargin=1em,xrightmargin=1em,breaklines=true}
+
+\emergencystretch=3em
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{observation}[theorem]{Observation}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\crefname{observation}{Observation}{Observations}
+
+\begin{document}
+\section{Proof-based Interpolation}
+We perform proof-based interpolation in the style of McMillan, ``Interpolants from Z3 Proofs.'' We may view this method as a set of Z3 proof-directed simplification rules to simplify the interpolation goal as much as possible, before delegating interpolant computation for a simpler formula into a secondary interpolating prover. Recall that for a given pair of formulas $(A, B)$ a \textbf{local} sequent is a sequent entirely in $\mathcal{L}(A)$ or in $\mathcal{L}(B)$. A collection of formulas $\Gamma$ is called \textbf{strict} if each formula of $\Gamma$ is local but $\Gamma$ itself features both formulas referencing $A$'s vocabulary and formulas referencing $B$'s vocabulary.  
+We assume the proof calculus for Z3 can be normalized to having the following form: 
+
+\begin{center}
+\vspace*{0.1in}
+\begin{prooftree}
+    \hypo{\Gamma, \Delta \text{ are local}}
+    \Infer1[LOCAL]{\Gamma \vdash \Delta}
+\end{prooftree}
+
+\vspace*{0.1in}
+\begin{prooftree}
+    \hypo{\Gamma \vdash \Delta, p}
+    \hypo{\Gamma' \vdash \Delta', \neg p}
+    \Infer2[RES]{\Gamma,\Gamma'\vdash \Delta, \Delta'}
+\end{prooftree}
+
+\vspace*{0.1in}
+\begin{prooftree}
+    \hypo{\,\,\Gamma, \Gamma' \vdash}
+    \Infer1[CONTRA]{\Gamma' \vdash \neg \Gamma'}
+\end{prooftree}
+
+\vspace*{0.1in}
+\begin{prooftree}
+    \hypo{\Gamma,\Delta \text{ are strict}}
+    \Infer1[LEMMA]{\Gamma\vdash \Delta}
+\end{prooftree}
+\end{center}
+
+Note that the LEMMA rule is essentially a relaxed version of the LOCAL rule, and the LEMMA leafs are exactly the proof obligations in need of delegating to a secondary interpolation prover.
+
+\paragraph{The interpolating calculus.}
+An \textbf{interpolation} is a sequent of form $(A, B) \vdash \Delta \,[\phi]$. Let $\Delta_A$ denote the parts of $\Delta$ that occur local in $A$, and let $\Delta_B$ denote the parts of $\Delta$ that occur local in $B$. We say this sequent is valid when
+\begin{enumerate}
+    \item $A \wedge \neg \Delta_A \vDash \phi$
+    \item $B \wedge \neg \Delta_B \wedge \phi$ is UNSAT
+    \item $\mathcal{L}(\phi)\subset \mathcal{L}(A)\cap\mathcal{L}(B)$
+\end{enumerate}
+We may design sequent interpolants via the following set of rules
+\begin{gather*}
+% LocalA
+\begin{prooftree}
+  \infer[
+    left label=\textsc{LocalA},
+    right label={$\bigwedge A \models_{\mathcal T} \bigvee\Delta,
+                  \quad \Delta \subseteq \mathcal L(A)$}
+  ]0{
+    (A,B) \vdash \Delta \; [\bigvee\Delta_B]
+  }
+\end{prooftree}
+\\[1.5ex]
+% LocalB
+\begin{prooftree}
+  \infer[
+    left label=\textsc{LocalB},
+    right label={$\bigwedge B \models_{\mathcal T} \bigvee\Delta,
+                  \quad \Delta \subseteq \mathcal L(B)$}
+  ]0{
+    (A,B) \vdash \Delta \; [\text{\textsc{True}}]
+  }
+\end{prooftree}
+\\[1.5ex]
+% ResA
+\begin{prooftree}
+  \hypo{(A,B) \vdash \Delta,p \; [\phi]}
+  \hypo{(A,B) \vdash \Delta',\neg p \; [\phi']}
+  \infer[
+    left label=\textsc{ResA},
+    right label={$p \in \mathcal L(A) \setminus \mathcal L(B)$}
+  ]2{
+    (A,B) \vdash \Delta \cup \Delta' \; [\phi \lor \phi']
+  }
+\end{prooftree}
+\\[1.5ex]
+% ResB
+\begin{prooftree}
+  \hypo{(A,B) \vdash \Delta,p \; [\phi]}
+  \hypo{(A,B) \vdash \Delta',\neg p \; [\phi']}
+  \infer[
+    left label=\textsc{ResB},
+    right label={$p \in \mathcal L(B)$}
+  ]2{
+    (A,B) \vdash \Delta \cup \Delta' \; [\phi \land \phi']
+  }
+\end{prooftree}
+\\[1.5ex]
+% Contra
+\begin{prooftree}
+  \hypo{(A,B) \vdash \Delta \; [\phi]}
+  \infer[
+    left label=\textsc{Contra}
+  ]1{
+    (A,B) \vdash \Delta \; [\phi]
+  }
+\end{prooftree}
+\end{gather*}
+
+In what follows, we will show that as long as a given theory $Th$ supports model-based projection, we can design a model-based projection loop that handles all the \textsc{Lemma} nodes encountered in the above interpolating calculus.
+
+\section{Model-based Interpolation}
+
+This section introduces a model-based interpolation procedure that can be used on its own to generate interpolants for pairs of formulas, or be combined as a leaf-level solver for the LEMMA nodes inside the proof-based rules above.
+
+Recall the definition of Craig interpolation:
+\begin{definition}[Craig Interpolants]
+
+Given a formula $F(X, Z)$ and a formula $G(Z, Y)$ such that $F \wedge G$ is UNSAT, a \textbf{Craig interpolant} $I$ is a formula over vocabulary $Z$ such that (i) $F \vDash I$; (ii) $I \wedge G$ is UNSAT.
+\end{definition}
+
+
+%We assume that if $F$ is an UNSAT formula, then we can extract an implicant of a cube $F$ called the \textbf{UNSAT core} of $F$. An UNSAT core $C$ for $F$ is a subset of the conjuncts in $F$ such that $C$ is still UNSAT. 
+
+\begin{definition}[Model-based Projection]
+    Let $F$ be a conjunction of terms over vocabulary $X$, and let $M$ be a model of $F$. A \textbf{model-based projection} of $F$ on $S\subset X$ using $M$ is a cube $P$ such that
+    (i) $P$ is over vocabulary $X\setminus S$; (ii) $M\vDash P$; (iii) $P \vDash \exists S.F$. We denote the formula $P$ by $Mbp(F,S,M)$. A model-based projection operator $Mbp(-)$ has the \textbf{finite-image property} if there are only finitely many model-based projection formulas for a given $F$ and $M$.
+\end{definition}
+
+We asume for a formula $F$, the following primitives are available:
+\begin{enumerate}
+    \item If $F$ is SAT, then $Mbp(F,S,M)$ is the model-based projection of $\exists S. F$ at $M$;
+    \item If $F$ is UNSAT, then $Core(F)$ is the minimal UNSAT core of $F$.
+\end{enumerate}
+
+We claim the following algorithm using the above primitives produces a Craig interpolant, should it terminate:
+
+\begin{algorithmic}
+    \Procedure{MBI}{$A$, $B$}
+        \State $I \gets [];$
+        \State $F\gets A;$
+        \State $S \gets \mathcal{L}(A)\setminus \mathcal{L}(B);$
+        \While{$\text{Check}(F) \neq \text{UNSAT}$}
+            \State $M \gets \text{GetModel}(F);$
+            \State $P \gets Mbp(A,M,S);$
+            \If{$\text{Check}(B \wedge P)=\text{SAT}$}
+                \Return $(A, B)$ is SAT;
+            \Else 
+                \State $C \gets Core(B \wedge P);$
+                \State $F \gets F \wedge \neg (\bigwedge C);$
+                \State $I \gets I \cup C;$
+                \EndIf
+        \EndWhile 
+        \Return $\bigvee_{C \in I} (\bigwedge C)$;
+    \EndProcedure 
+\end{algorithmic}
+
+It is critical to note that any model $M$ of $F$ is also a model $M$ of $A$, since $F$ is always a strengthening of $A$. We have the following theorem:
+
+\begin{theorem}
+    If the MBI($A, B$) procedure returns a formula $I$, then $I$ is a Craig interpolant of $(A, B)$.
+\end{theorem}
+
+\begin{proof}
+Observe the following facts:
+\begin{enumerate}
+    \item At every iteration of MBI's inner loop, $A \vDash C$;
+    \item At every iteration of MBI's inner loop, $C \wedge B$ is UNSAT.
+\end{enumerate}
+
+    If MBI($A, B$) returns such a formula $I$, then its inner loop must have terminated at some step $k$, with
+    \[
+    F = A \wedge \neg C_1 \wedge \dots \wedge\neg C_n
+    \]
+    Since $A \vDash A$ and $A \vDash C_i$, we conclude that $A \vDash \bigvee_{i=1}^n C_i$. Since $B$ and each $C_i$ is UNSAT, $B \wedge \bigvee_{i=1}^nC_i = \bigvee_{i=1}^n B \wedge C_i$ is UNSAT. This concludes the proof.
+\end{proof}
+
+Furthermore, the above procedure terminates if the model-based projection operator has the finite-image property.
+
+The above algorithm shows up in various places, including in the paper ``Model Based Interpolation for Uninterpreted
+Functions and Integer Linear Arithmetic'' by Nikolaj Bjorner, Arie Gurfinkel, Sharon Shoham and Yakir Vizel, LPAR 2023.
+
+
+\end{document}
+

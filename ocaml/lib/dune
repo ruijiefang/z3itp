@@ -1,0 +1,5 @@
+; The z3itp library: interpolants from Z3 proofs (McMillan, FMCAD 2011).
+(library
+ (name z3itp)
+ (libraries z3 zarith)
+ (flags (:standard -w +a-4-9-40-41-42-44-45-70)))

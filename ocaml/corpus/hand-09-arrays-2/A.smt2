@@ -1,0 +1,5 @@
+(declare-fun a () Int)
+(declare-fun arr () (Array Int Int))
+(declare-fun brr () (Array Int Int))
+(declare-fun c () Int)
+(assert (= brr (store arr a 5)))

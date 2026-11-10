@@ -1,0 +1,6 @@
+(declare-fun a () Int)
+(declare-fun Q (Int Int) Bool)
+(declare-fun c () Int)
+(declare-fun b () Int)
+(assert (not (Q b c)))
+(assert (< (+ b c) 3))

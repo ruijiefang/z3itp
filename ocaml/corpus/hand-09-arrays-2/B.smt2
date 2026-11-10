@@ -1,0 +1,6 @@
+(declare-fun a () Int)
+(declare-fun arr () (Array Int Int))
+(declare-fun brr () (Array Int Int))
+(declare-fun c () Int)
+(assert (distinct (select brr c) 5))
+(assert (= c a))

@@ -1,0 +1,7 @@
+(declare-fun b () Int)
+(declare-fun a () Int)
+(declare-fun c () Int)
+(declare-fun f (Int) Int)
+(declare-fun d () Int)
+(assert (= b d))
+(assert (distinct (f d) c))

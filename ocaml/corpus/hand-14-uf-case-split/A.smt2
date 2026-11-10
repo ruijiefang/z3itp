@@ -1,0 +1,8 @@
+(declare-fun b () Int)
+(declare-fun f (Int) Int)
+(declare-fun x () Int)
+(declare-fun a () Int)
+(declare-fun z () Int)
+(declare-fun y () Int)
+(assert (or (= (f x) a) (= (f x) b)))
+(assert (or (= x y) (= x z)))

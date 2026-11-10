@@ -1,0 +1,13 @@
+; Test runner (test_z3itp.exe) and its inputs.  `dune test` runs the
+; hand-written cases and the BMC cases.
+(executable
+ (name test_z3itp)
+ (modules cases corpus test_z3itp)
+ (libraries z3itp z3 zarith unix))
+
+(rule
+ (alias runtest)
+ (action
+  (progn
+   (run %{exe:test_z3itp.exe} hand)
+   (run %{exe:test_z3itp.exe} bmc 3 6))))

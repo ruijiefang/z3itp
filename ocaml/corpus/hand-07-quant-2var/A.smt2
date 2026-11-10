@@ -1,0 +1,6 @@
+(declare-fun a () Int)
+(declare-fun Q (Int Int) Bool)
+(declare-fun c () Int)
+(declare-fun b () Int)
+(assert (forall ((X Int) (Y Int)) (or (Q X Y) (> (+ X Y) a))))
+(assert (> a 10))

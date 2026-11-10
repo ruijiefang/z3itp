@@ -1,0 +1,5 @@
+; dump_proof.exe: print Z3 proofs of built-in examples (port of dump_proof.py).
+; quickstart.exe: the README's quick-start example.
+(executables
+ (names dump_proof quickstart)
+ (libraries z3itp z3))
